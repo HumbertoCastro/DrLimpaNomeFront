@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Checkbox from '@mui/material/Checkbox';
 import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -14,22 +15,21 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import { Money, Pen } from '@phosphor-icons/react';
 import dayjs from 'dayjs';
 
 import { useSelection } from '@/hooks/use-selection';
-
-function noop(): void {
-  // do nothing
-}
 
 export interface Customer {
   id: string;
   avatar: string;
   name: string;
   email: string;
-  address: string;
+  documento: string;
+  role: string;
   phone: string;
   createdAt: Date;
+  saldo: number;
 }
 
 interface CustomersTableProps {
@@ -37,18 +37,30 @@ interface CustomersTableProps {
   page?: number;
   rows?: Customer[];
   rowsPerPage?: number;
+  onPageChange?: (event: unknown, newPage: number) => void;
+  onRowsPerPageChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onEdit?: (customer: Customer) => void; // Callback for edit button
+  onAddSaldo?: (customer: Customer) => void; // Callback for edit button
 }
+
+export const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value / 100);
+};
 
 export function CustomersTable({
   count = 0,
   rows = [],
   page = 0,
-  rowsPerPage = 0,
+  rowsPerPage = 5,
+  onPageChange,
+  onRowsPerPageChange,
+  onAddSaldo,
+  onEdit, // New prop for handling edit action
 }: CustomersTableProps): React.JSX.Element {
-  const rowIds = React.useMemo(() => {
-    return rows.map((customer) => customer.id);
-  }, [rows]);
-
+  const rowIds = React.useMemo(() => rows.map((customer) => customer.id), [rows]);
   const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
 
   const selectedSome = (selected?.size ?? 0) > 0 && (selected?.size ?? 0) < rows.length;
@@ -78,6 +90,8 @@ export function CustomersTable({
               <TableCell>CPF / CNPJ</TableCell>
               <TableCell>Telefone</TableCell>
               <TableCell>Data de Cadastro</TableCell>
+              <TableCell>Saldo</TableCell>
+              <TableCell>Editar / Adicionar Saldo</TableCell> {/* New column for actions */}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -105,11 +119,20 @@ export function CustomersTable({
                     </Stack>
                   </TableCell>
                   <TableCell>{row.email}</TableCell>
-                  <TableCell>
-                    {row.address}
-                  </TableCell>
+                  <TableCell>{row.documento}</TableCell>
                   <TableCell>{row.phone}</TableCell>
                   <TableCell>{dayjs(row.createdAt).format('MMM D, YYYY')}</TableCell>
+                  <TableCell>{formatCurrency(row.saldo)}</TableCell> {/* Format saldo with currency */}
+                  <TableCell>
+                    {/* Edit button */}
+                    <IconButton onClick={() => onEdit?.(row)} aria-label="edit">
+                      <Pen type="bold" size={32} />
+                    </IconButton>
+                    {/* Add saldo button */}
+                    <IconButton onClick={() => onAddSaldo?.(row)} aria-label="add saldo">
+                      <Money type="bold" size={32} />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -119,13 +142,13 @@ export function CustomersTable({
       <Divider />
       <TablePagination
         component="div"
-        count={count}
-        onPageChange={noop}
-        onRowsPerPageChange={noop}
-        page={page}
-        rowsPerPage={rowsPerPage}
+        count={count} // Total number of rows available in the backend
+        onPageChange={onPageChange} // Trigger this when page changes
+        onRowsPerPageChange={onRowsPerPageChange} // Trigger this when rows per page change
+        page={page} // Current page
+        rowsPerPage={rowsPerPage} // Number of rows per page
         labelRowsPerPage="Linhas por página"
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[5, 10, 25]} // Options for rows per page
       />
     </Card>
   );

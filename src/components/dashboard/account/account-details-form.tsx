@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { ApiService } from '@/services/ApiServices';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
@@ -21,47 +22,53 @@ const states = [
   { value: 'los-angeles', label: 'Los Angeles' },
 ] as const;
 
-export function AccountDetailsForm(): React.JSX.Element {
+const apiService = new ApiService();
+export function AccountDetailsForm({ user }: { user: any }): React.JSX.Element {
+  const onSubmitForm = async (event: any) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget as HTMLFormElement);
+
+    const data = {
+      name: formData.get('firstName'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+    };
+
+    await apiService.putApi(`/users/${user.id}`, { ...data, role: user.role });
+    window.location.reload();
+  };
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-      }}
-    >
+    <form onSubmit={onSubmitForm}>
       <Card>
         <CardHeader subheader="Essas informações podem ser editadas" title="Perfil" />
         <Divider />
         <CardContent>
           <Grid container spacing={3}>
-            <Grid md={6} xs={12}>
+            <Grid md={12} xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>Nome</InputLabel>
-                <OutlinedInput defaultValue="Sofia" label="Nome" name="firstName" />
-              </FormControl>
-            </Grid>
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Sobrenome</InputLabel>
-                <OutlinedInput defaultValue="Rivers" label="Sobrenome" name="lastName" />
+                <OutlinedInput defaultValue={user.name} label="Nome" name="firstName" />
               </FormControl>
             </Grid>
             <Grid md={6} xs={12}>
               <FormControl fullWidth required>
                 <InputLabel>E-mail</InputLabel>
-                <OutlinedInput defaultValue="sofia@devias.io" label="E-mail" name="email" />
+                <OutlinedInput defaultValue={user.email} label="E-mail" name="email" />
               </FormControl>
             </Grid>
             <Grid md={6} xs={12}>
               <FormControl fullWidth>
                 <InputLabel>Telefone</InputLabel>
-                <OutlinedInput label="Telefone" name="phone" type="tel" />
+                <OutlinedInput label="Telefone" name="phone" defaultValue={user.phone} type="tel" />
               </FormControl>
             </Grid>
           </Grid>
         </CardContent>
         <Divider />
         <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button variant="contained">Save details</Button>
+          <Button variant="contained" type="submit">
+            Save details
+          </Button>
         </CardActions>
       </Card>
     </form>

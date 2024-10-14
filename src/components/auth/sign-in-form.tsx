@@ -13,6 +13,7 @@ import Link from '@mui/material/Link';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { Box } from '@mui/system';
 import { Eye as EyeIcon } from '@phosphor-icons/react/dist/ssr/Eye';
 import { EyeSlash as EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { Controller, useForm } from 'react-hook-form';
@@ -29,7 +30,7 @@ const schema = zod.object({
 
 type Values = zod.infer<typeof schema>;
 
-const defaultValues = { email: 'sofia@devias.io', password: 'Secret1' } satisfies Values;
+const defaultValues = { email: '', password: '' } satisfies Values;
 
 export function SignInForm(): React.JSX.Element {
   const router = useRouter();
@@ -51,7 +52,7 @@ export function SignInForm(): React.JSX.Element {
     async (values: Values): Promise<void> => {
       setIsPending(true);
 
-      const { error } = await authClient.signInWithPassword(values);
+      const { error, token } = await authClient.signInWithPassword(values);
 
       if (error) {
         setError('root', { type: 'server', message: error });
@@ -60,7 +61,7 @@ export function SignInForm(): React.JSX.Element {
       }
 
       // Refresh the auth state
-      await checkSession?.();
+      await checkSession?.(token);
 
       // UserProvider, for this case, will not refresh the router
       // After refresh, GuestGuard will handle the redirect
@@ -72,12 +73,9 @@ export function SignInForm(): React.JSX.Element {
   return (
     <Stack spacing={4}>
       <Stack spacing={1}>
-        <Typography variant="h4">Sign in</Typography>
+        <Typography variant="h4">Login</Typography>
         <Typography color="text.secondary" variant="body2">
-          Não tem uma conta ?{' '}
-          <Link component={RouterLink} href={paths.auth.signUp} underline="hover" variant="subtitle2">
-            Criar conta
-          </Link>
+          Entre com sua conta
         </Typography>
       </Stack>
       <form onSubmit={handleSubmit(onSubmit)}>

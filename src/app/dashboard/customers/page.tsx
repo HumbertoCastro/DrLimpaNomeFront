@@ -1,124 +1,101 @@
-"use client";
+'use client';
+
 import * as React from 'react';
-import type { Metadata } from 'next';
+import { useEffect, useState } from 'react';
+import { ApiService } from '@/services/ApiServices';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { Download as DownloadIcon } from '@phosphor-icons/react/dist/ssr/Download';
 import { Plus as PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
-import { Upload as UploadIcon } from '@phosphor-icons/react/dist/ssr/Upload';
-import dayjs from 'dayjs';
 
-import { config } from '@/config';
 import { CustomersFilters } from '@/components/dashboard/customer/customers-filters';
 import { CustomersTable } from '@/components/dashboard/customer/customers-table';
 import type { Customer } from '@/components/dashboard/customer/customers-table';
-import { useState } from 'react';
+import { UserFormComponent } from '@/components/dialog/UserForm';
 
-const customers = [
-  {
-    id: 'USR-010',
-    name: 'Alcides Antonio',
-    avatar: '/assets/avatar-10.png',
-    email: 'alcides.antonio@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-009',
-    name: 'Marcus Finn',
-    avatar: '/assets/avatar-9.png',
-    email: 'marcus.finn@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-008',
-    name: 'Jie Yan',
-    avatar: '/assets/avatar-8.png',
-    email: 'jie.yan.song@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-007',
-    name: 'Nasimiyu Danai',
-    avatar: '/assets/avatar-7.png',
-    email: 'nasimiyu.danai@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-006',
-    name: 'Iulia Albu',
-    avatar: '/assets/avatar-6.png',
-    email: 'iulia.albu@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-005',
-    name: 'Fran Perez',
-    avatar: '/assets/avatar-5.png',
-    email: 'fran.perez@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-
-  {
-    id: 'USR-004',
-    name: 'Penjani Inyene',
-    avatar: '/assets/avatar-4.png',
-    email: 'penjani.inyene@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-003',
-    name: 'Carson Darrin',
-    avatar: '/assets/avatar-3.png',
-    email: 'carson.darrin@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-002',
-    name: 'Siegbert Gottfried',
-    avatar: '/assets/avatar-2.png',
-    email: 'siegbert.gottfried@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-  {
-    id: 'USR-001',
-    name: 'Miron Vitold',
-    avatar: '/assets/avatar-1.png',
-    email: 'miron.vitold@devias.io',
-    phone: '(31) 98942-3123',
-    address: '312.423.423-12',
-    createdAt: dayjs().subtract(2, 'hours').toDate(),
-  },
-] satisfies Customer[];
+const apiService = new ApiService();
 
 export default function Page(): React.JSX.Element {
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [clientFilters, setClientFilters] = useState<string>('');
-  const page = 0;
-  const rowsPerPage = 5;
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [openForm, setOpenForm] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit' | 'saldo'>('create');
+  const [editUser, setEditUser] = useState<Customer | null>(null);
 
-  let paginatedCustomers = applyPagination(customers, page, rowsPerPage);
+  // Fetch customers from the API whenever the page or rowsPerPage changes
+  const fetchCustomers = async () => {
+    try {
+      const response = await apiService.getApi<{ customers: Customer[]; totalPages: number }>('/users/all', {
+        page: page + 1, // API might expect 1-based page index
+        limit: rowsPerPage,
+      });
+      setCustomers(response.customers);
+      setTotalPages(response.totalPages); // Set total pages for pagination
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+    }
+  };
 
-  paginatedCustomers = applyPagination(customers, page, rowsPerPage).filter((customer) => {
-    return customer.name.toLowerCase().includes(clientFilters.toLowerCase());
-  });
+  useEffect(() => {
+    fetchCustomers();
+  }, [page, rowsPerPage]);
+
+  // Handle opening the form in create mode
+  const handleOpenCreateForm = () => {
+    setFormMode('create');
+    setEditUser(null); // No user for edit in create mode
+    setOpenForm(true);
+  };
+
+  // Handle opening the form in edit mode
+  const handleOpenEditForm = (customer: Customer) => {
+    setFormMode('edit');
+    setEditUser(customer); // Set the user to be edited
+    setOpenForm(true);
+  };
+
+  // Handle opening the form in edit mode
+  const handleOpenSaldoForm = (customer: Customer) => {
+    setFormMode('saldo');
+    setEditUser(customer); // Set the user to be edited
+    setOpenForm(true);
+  };
+
+  // Handle form submission
+  const handleFormSubmit = async (data: FormData) => {
+    try {
+      if (formMode === 'create') {
+        // Create new user
+        await apiService.postApi('/users/create', { ...data, role: 2 });
+      } else if (formMode === 'edit' && editUser) {
+        await apiService.putApi(`/users/${editUser.id}`, { ...data, role: 2 }); // You might need to adjust for PUT
+      } else if (formMode === 'saldo' && editUser) {
+        await apiService.putApi(`/users/saldo/${editUser.id}`, { ...data, role: 2 });
+      }
+      fetchCustomers(); // Refresh customers after form submission
+      setOpenForm(false); // Close the form after submission
+    } catch (error) {
+      console.error('Failed to submit form:', error);
+    }
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  // Handle rows per page change
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset page to 0 when rows per page changes
+  };
+
+  const filteredCustomers = customers.filter((customer) =>
+    customer.name.toLowerCase().includes(clientFilters.toLowerCase())
+  );
 
   return (
     <Stack spacing={3}>
@@ -127,22 +104,36 @@ export default function Page(): React.JSX.Element {
           <Typography variant="h4">Clientes</Typography>
         </Stack>
         <div>
-          <Button startIcon={<PlusIcon fontSize="var(--icon-fontSize-md)" />} variant="contained">
+          <Button
+            startIcon={<PlusIcon fontSize="var(--icon-fontSize-md)" />}
+            variant="contained"
+            onClick={handleOpenCreateForm}
+          >
             Add
           </Button>
         </div>
       </Stack>
       <CustomersFilters setClientFilters={setClientFilters} />
       <CustomersTable
-        count={paginatedCustomers.length}
+        count={filteredCustomers.length}
         page={page}
-        rows={paginatedCustomers}
+        rows={filteredCustomers}
         rowsPerPage={rowsPerPage}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        totalPages={totalPages}
+        onEdit={handleOpenEditForm} // Pass edit handler to the table
+        onAddSaldo={handleOpenSaldoForm} // Pass edit handler to the table
+      />
+
+      {/* Form Component for both create and edit */}
+      <UserFormComponent
+        open={openForm}
+        onClose={() => setOpenForm(false)}
+        onSubmit={handleFormSubmit}
+        mode={formMode}
+        initialData={editUser} // Pass the data when editing
       />
     </Stack>
   );
-}
-
-function applyPagination(rows: Customer[], page: number, rowsPerPage: number): Customer[] {
-  return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }

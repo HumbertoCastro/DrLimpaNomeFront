@@ -24,7 +24,6 @@ const statusMap = {
 export interface Order {
   id: string;
   customer: { name: string };
-  amount: number;
   status: 'pendente' | 'enviado' | 'cancelado';
   createdAt: Date;
 }
@@ -68,16 +67,6 @@ export function LatestOrders({ orders = [], sx }: LatestOrdersProps): React.JSX.
         </Table>
       </Box>
       <Divider />
-      <CardActions sx={{ justifyContent: 'flex-end' }}>
-        <Button
-          color="inherit"
-          endIcon={<ArrowRightIcon fontSize="var(--icon-fontSize-md)" />}
-          size="small"
-          variant="text"
-        >
-          View all
-        </Button>
-      </CardActions>
     </Card>
   );
 }

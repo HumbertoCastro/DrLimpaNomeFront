@@ -13,7 +13,7 @@ export interface BudgetProps {
   diff?: number;
   trend: 'up' | 'down';
   sx?: SxProps;
-  value: string;
+  value: number;
   title: string;
   subtitle: string;
   icon: React.ReactNode;

@@ -4,14 +4,18 @@ import InputAdornment from '@mui/material/InputAdornment';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import { MagnifyingGlass as MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 
-export function CustomersFilters({ setClientFilters }: { setClientFilters: (value: string) => void }): React.JSX.Element {
+export function CustomersFilters({
+  setClientFilters,
+}: {
+  setClientFilters: (value: string) => void;
+}): React.JSX.Element {
   return (
     <Card sx={{ p: 2 }}>
       <OutlinedInput
         defaultValue=""
         fullWidth
         onChange={(event): void => setClientFilters(event.target.value)}
-        placeholder="Filtrar Clientes"
+        placeholder="Filtrar Clientes por Nome"
         startAdornment={
           <InputAdornment position="start">
             <MagnifyingGlassIcon fontSize="var(--icon-fontSize-md)" />
